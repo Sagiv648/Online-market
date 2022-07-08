@@ -6,8 +6,10 @@ import bcrypt from 'bcryptjs'
 import cookie from 'cookie-parser'
 import db from './../Models/dbConn.js'
 import acc from './../Models/accounts.js'
+import jwt from 'jsonwebtoken'
+import emailer from 'nodemailer'
 
-
+//TODO: Integrate json-web-token
 
 let session;
 
@@ -26,7 +28,9 @@ const loginPost = async (req,res) => {
         if(isCorrectPassowrd){
             //creating the session for the user
             session = req.session
-            session.userid = loginee.email_addr
+            session.userid = {email: loginee.email_addr,
+                                Name: `${loginee.first_name} ${loginee.last_name}`
+                                }
             console.log(`from the loginPost: ${req.session.userid}`);
             return res.status(200).json({
                 msg: `welcome ${loginee.first_name} ${loginee.last_name}`,

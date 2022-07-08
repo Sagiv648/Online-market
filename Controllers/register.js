@@ -19,7 +19,10 @@ const registerPost = async (req,res) => {
 
 
     const registree = req.body;
-    
+
+    console.log(`test: data from front-end\n:`);
+    console.log(registree);
+
     const acc_found = await acc.findAll({where: {email_addr: registree.email_addr}})
     
     if(acc_found.length > 0){
@@ -40,10 +43,13 @@ const registerPost = async (req,res) => {
 
         })
         .then(result => {
+            res.status(200).redirect('/')
+            /*
             return res.status(200).json({
                 status: "account successfully registered",
                 result: result
             })
+            */
         })
         .catch(err => {
             console.log(`Error:\n ${err}`);

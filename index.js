@@ -24,6 +24,7 @@ const app = express();
 
 
 app.set('views', 'ejs');
+app.set('views', 'views');
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 app.use(express.static('views'))
@@ -39,10 +40,8 @@ app.use(expSession({
 
 
 app.get('/', (req,res) => {
-    console.log(req.session)
-    return res.status(200).json({
-        session: req.session
-    })
+    
+    return res.status(200).render('index.ejs')
 })
 
 app.get('/register', reg.registerGet);
