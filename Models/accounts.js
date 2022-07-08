@@ -2,6 +2,7 @@ import sequelize from 'sequelize'
 import { INTEGER } from 'sequelize'
 import dbConn from './dbConn.js'
 
+
 export default dbConn.define('account', {
     id: {
         type: sequelize.INTEGER,

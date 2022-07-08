@@ -3,11 +3,14 @@ import express from 'express'
 import bodyParser from 'body-parser';
 import expSession from 'express-session'
 import bcrypt from 'bcryptjs'
-import cookie from 'cookie-parser'
+import cookieParser from 'cookie-parser'
 import db from './Models/dbConn.js'
 import reg from './Controllers/register.js'
 import login from './Controllers/login.js'
 
+
+
+const sessionLength = 86400000
 const details = {
     port: process.env.PORT,
     host: process.env.HOST
@@ -17,14 +20,29 @@ const details = {
 env.config()
 const app = express();
 
+
+
+
 app.set('views', 'ejs');
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 app.use(express.static('views'))
+app.use(cookieParser())
+app.use(expSession({
+    secret: process.env.SECRET,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: sessionLength
+    },
+    resave:false
+}))
 
 
 app.get('/', (req,res) => {
-    res.status(200).send("working")
+    console.log(req.session)
+    return res.status(200).json({
+        session: req.session
+    })
 })
 
 app.get('/register', reg.registerGet);
