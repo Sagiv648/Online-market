@@ -42,8 +42,8 @@ const registerPost = async (req,res) => {
             secure: true,
             secureConnection: false,
             auth: {
-                user: 'lsrpacc9@gmail.com',
-                pass: 'qxsjzzgnwdrcxlgt', 
+                user: process.env.EMAILSENDER,
+                pass: process.env.APPPASSWORD, 
             },
             tls:{
                 rejectUnAuthorized:true
@@ -53,15 +53,20 @@ const registerPost = async (req,res) => {
             
         
         var message = {
-                    from: "sender@gmail.com",
-                    to: "sagivalia11@gmail.com",
-                    subject: "Message title",
-                    html: `<p>Your verification code is 12345</p>`
+                    from: process.env.EMAILSENDER,
+                    to: registree.email_addr,
+                    subject: "Online market verification",
+                    html: `
+                    <h2 style="color:blue;"> Hello ${registree.first_name} ${registree.last_name} </h2>
+                    <p>We thank you for giving our market a chance.</P><br> 
+                    <p>However in order to fully browse our stock you will need to verify your account, the verification code is listed below:</p>
+                    <p>Your verification code is ${between(1000,1000000)}</p><br>
+                    <p>NOTE: The verification code will expire in 10 minutes.</p>`
                     };
 
          transport.sendMail(message)
          .then(response => {
-            console.log(`Email: email sent:\n ${response}`);
+            console.log(`Email: email sent:\n ${response.envelope}`);
          })
          .catch(err => {
             console.log(`Error: \n ${err}`);
