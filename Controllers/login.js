@@ -11,11 +11,13 @@ import emailer from 'nodemailer'
 
 //TODO: Integrate json-web-token
 
-let session;
+
 
 const loginGet = (req,res) => {
-    console.log(req.body)
+    console.log(" (render login page) ")
+    console.log(req.session.userid);
 }
+let session;
 const loginPost = async (req,res) => {
     //TODO: Integrate session functionality
 
@@ -27,15 +29,19 @@ const loginPost = async (req,res) => {
 
         if(isCorrectPassowrd){
             //creating the session for the user
+
+            
+            
+            
             session = req.session
-            session.userid = {email: loginee.email_addr,
-                                Name: `${loginee.first_name} ${loginee.last_name}`
-                                }
+            session.userid = `${loginee.first_name} ${loginee.last_name}`
+                                
+                                
             console.log(`from the loginPost: ${req.session.userid}`);
-            return res.status(200).json({
-                msg: `welcome ${loginee.first_name} ${loginee.last_name}`,
-                session: req.session
-            })
+
+            //res.status(200).redirect('/')
+            
+            return res.status(200);
         }
         return res.status(400).json({
             error: "incorrect details"

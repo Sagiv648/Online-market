@@ -1,6 +1,12 @@
 import axios from 'axios'
 import env from 'dotenv'
 env.config();
+
+const getName = () => {
+   document.getElementById('xx').value = "test"
+}
+getName();
+
 const button = document.getElementById('btn')
 const toSend = {
     first_name: document.getElementById('fname').value,
@@ -23,3 +29,5 @@ button.addEventListener('click', ()=> {
         console.log(`the error: \n ${err}`);
      })
 })
+
+

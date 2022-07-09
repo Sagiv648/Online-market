@@ -1,12 +1,35 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-<script type="text/javascript" src="./apicalls.js"></script>
-</head>
+<%- include("partials/head.ejs", {page_title: 'Home', css_file: 'index.css', js_file:'apicalls.js'}); %>
 
 <body>
-    <form action="/sendregister" method="post">
+    <%-include("partials/navbar.ejs", {username: user})%>
+    
+
+
+    
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+<!--
+
+Post request form
+
+<form action="/sendregister" method="post">
         <h2>Register</h2>
         <div class="input-field">
             <input type="text" name="first_name" id="fname" placeholder="Enter first name">
@@ -31,6 +54,6 @@
         <input type="submit" value="Verify" id="verCode">
 
     </form>
-</body>
 
-</html>
+
+-->

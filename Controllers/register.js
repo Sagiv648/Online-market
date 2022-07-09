@@ -8,13 +8,13 @@ import db from './../Models/dbConn.js'
 import acc from './../Models/accounts.js'
 import jwt from 'jsonwebtoken'
 import emailer from 'nodemailer'
-import smtpserver, { SMTPServer } from 'smtp-server' 
+
+
 const registerGet = (req,res) => {
-    console.log("good get")
-    return res.status(200).json({
-        msg: "works"
-    })
+    console.log("(render register page)")
 }
+
+
 const registerPost = async (req,res) => {
     //TODO: Integrate session functionality
     const registree = req.body;
@@ -23,17 +23,14 @@ const registerPost = async (req,res) => {
     //console.log(registree);
     const acc_found = await acc.findAll({where: {email_addr: registree.email_addr}})
     
-
-
-
     if(acc_found.length > 0){
-        
+        const exists = 1
         return res.status(400).json({
             error: "account exists"
         })
     }
     else{
-        const smtp = new SMTPServer()
+        //----------- emailing sector -----------
         
         //Works now
         const transport = emailer.createTransport({
@@ -50,8 +47,6 @@ const registerPost = async (req,res) => {
             }
             
         })
-            
-        
         var message = {
                     from: process.env.EMAILSENDER,
                     to: registree.email_addr,
@@ -71,6 +66,8 @@ const registerPost = async (req,res) => {
          .catch(err => {
             console.log(`Error: \n ${err}`);
          })
+
+         //---- end of emailing sector ---
 
         const encrypedPass = await bcrypt.hash(registree.password, 10);
         acc.create({
