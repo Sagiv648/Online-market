@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<%-include('./../partials/head.ejs', {page_title: 'Login', css_path: './login.css', js_path: './login.js'}); %>
+
+<body>
+<%- include('./../partials/navbar.ejs', {username: "", isLogged: 0})%>
+<br>
+
+<div class="left"></div>
+<div class="right"></div>
+<form>
+    <div class="email">
+        <label for="email">Email Address:</label><br><br>
+    <input class="emailField" type="text" id="emailLogin" name="email_addr" placeholder="Enter your email"><br><br>
+    </div>
+    
+    <br>
+    <div class="password">
+        <label for="password">Password:</label><br><br>
+    <input class="passwordField" type="password" id="passwordLogin" name="password" placeholder="Enter your password">
+    </div>
+
+    <div class="errorMsg" id="error">
+        <tr>* Incorrect password or email. *</tr>
+    </div>
+    
+
+    <br>
+    <div class="buttonSect">
+        <button class="button" type="submit" id="submitBtn">Login</button>
+
+    </div>
+    
+    
+    
+
+</form>
+
+
+</body>
+
+</html>

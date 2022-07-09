@@ -10,30 +10,69 @@ import jwt from 'jsonwebtoken'
 import emailer from 'nodemailer'
 
 
+
+//NOTE: forum account will be locked until verified through email
+// A locked forum account means that the account will NOT have access to the following:
+// 1. Store route
+// 2. Cart
+
+//Check password's strength
+const checkPassword = (body) => {
+    if(body.password.length < 8){
+        return 0
+    }
+    let i;
+    const validationArr = [0, 0, 0]
+    for(i = 0; i < body.password.length; i++){
+        if(validationArr[0] == 0 && body.password[i] >= 'A' && body.password[i] <= 'Z'){
+            validationArr[0] = 1;
+        }
+        if(validationArr[1] == 0 && body.password[i] >= '0' && body.password[i] <= '9'){
+            validationArr[1] = 1;
+        }
+        if(validationArr[2] == 0 && (body.password[i] < 'A' || body.password[i] > 'Z') && (body.password[i] < '0' || body.password[i] > '9')){
+            validationArr[2] = 1;
+        }
+        
+    }
+    
+    return (validationArr[0] * validationArr[1] * validationArr[2])
+}
+
+//Check email's validation in terms of characters and whether it exists
+//Needs to check the database
+const checkEmail = async (body) => {
+
+    const testEmail = body.email_addr.split('@')
+    
+    if(testEmail.length != 2){
+        return 0
+    }
+    const testEmailDomain = testEmail[1].split('.')
+    //As for now, support only for .com will be supplied
+    
+    if(testEmailDomain.length != 2 || testEmailDomain[0] != 'gmail'){
+        return 0
+    }
+
+    const acc_found = await acc.findAll({where: {email_addr: body.email_addr}})
+    return !(acc_found.length * 1);
+}
+
+//Check phone number's validation in terms of prefix and length (will only apply to Israel)
+const checkPhoneNumber = (body) => {
+    if(body.phone_number.length != 10 || body.phone_number[0] != 0) {
+        return 0
+    }
+    return 1;
+}
+
 const registerGet = (req,res) => {
     console.log("(render register page)")
 }
 
-
-const registerPost = async (req,res) => {
-    //TODO: Integrate session functionality
-    const registree = req.body;
-
-    //console.log(`test: data from front-end\n:`);
-    //console.log(registree);
-    const acc_found = await acc.findAll({where: {email_addr: registree.email_addr}})
-    
-    if(acc_found.length > 0){
-        const exists = 1
-        return res.status(400).json({
-            error: "account exists"
-        })
-    }
-    else{
-        //----------- emailing sector -----------
-        
-        //Works now
-        const transport = emailer.createTransport({
+const emailVerification = async (registree) => {
+    const transport = emailer.createTransport({
             service: 'gmail',
             port:465,
             secure: true,
@@ -55,7 +94,7 @@ const registerPost = async (req,res) => {
                     <h2 style="color:blue;"> Hello ${registree.first_name} ${registree.last_name} </h2>
                     <p>We thank you for giving our market a chance.</P><br> 
                     <p>However in order to fully browse our stock you will need to verify your account, the verification code is listed below:</p>
-                    <p>Your verification code is ${between(1000,1000000)}</p><br>
+                    <p>Your verification code is ${between(1000,9999999)}</p><br>
                     <p>NOTE: The verification code will expire in 10 minutes.</p>`
                     };
 
@@ -67,36 +106,49 @@ const registerPost = async (req,res) => {
             console.log(`Error: \n ${err}`);
          })
 
-         //---- end of emailing sector ---
+}
 
-        const encrypedPass = await bcrypt.hash(registree.password, 10);
-        acc.create({
-            first_name: registree.first_name,
-            last_name: registree.last_name,
-            phone_number: registree.phone_number,
-            email_addr: registree.email_addr,
-            password: encrypedPass,
-            isLocked: false
+const registerPost = async (req,res) => {
+    //TODO: Integrate session functionality
+    const registree = req.body;
 
-        })
-        .then(result => {
-            res.status(200).redirect('/')
-            /*
-            return res.status(200).json({
-                status: "account successfully registered",
-                result: result
-            })
-            */
-        })
-        .catch(err => {
-            console.log(`Error:\n ${err}`);
-            return res.status(500).json({
-                error: err
-            })
+    //---- details validation ----
+    let test = await checkEmail(registree)
+    test *= checkPassword(registree) * checkPhoneNumber(registree)
+    if(test == 0){
+        return res.status(400).json({
+            error: "error occured with user"
         })
     }
+    //--- end of details validation ----
+
+    //--- password encryption ----
+    const encrypedPass = await bcrypt.hash(registree.password, 10);
+    acc.create({
+        first_name: registree.first_name,
+        last_name: registree.last_name,
+        phone_number: registree.phone_number,
+        email_addr: registree.email_addr,
+        password: encrypedPass,
+        isLocked: true
+
+    })
+    .then(result => {
+        res.status(200).redirect('/')
+    })
+    .catch(err => {
+        console.log(`Error:\n ${err}`);
+        return res.status(500).json({
+            error: err
+        })
+    })
+    //--- end of password encryption ----
+    
+
 
 }
+
+
 
 
 function between(min, max) {  

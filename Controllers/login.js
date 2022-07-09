@@ -14,8 +14,9 @@ import emailer from 'nodemailer'
 
 
 const loginGet = (req,res) => {
-    console.log(" (render login page) ")
-    console.log(req.session.userid);
+
+    res.status(200).render('login/login.ejs')
+
 }
 let session;
 const loginPost = async (req,res) => {
@@ -30,28 +31,29 @@ const loginPost = async (req,res) => {
         if(isCorrectPassowrd){
             //creating the session for the user
 
-            
-            
-            
             session = req.session
             session.userid = `${loginee.first_name} ${loginee.last_name}`
-                                
-                                
-            console.log(`from the loginPost: ${req.session.userid}`);
-
+                        
+            console.log(`from the loginPost: ${req.session}`);
+            req.session.save(()=> {
+                console.log("session saved")
+                
+            })
+            res.body = {isUser : 1}
             //res.status(200).redirect('/')
-            
-            return res.status(200);
+            return res.status(200).redirect('/')
+            //return res.status(200);
+             
         }
-        return res.status(400).json({
-            error: "incorrect details"
-        })
+        console.log("no");
+        res.body = {isUser: 0}
+        return res.status(400).redirect('/login')
     }
-
-
-    return res.status(400).json({
-        error: "user not registered"
-    })
+    console.log("no");
+    res.body = {
+        isUser: 0
+    }
+    return res.status(400).redirect('/login')
 }
 
 export default {

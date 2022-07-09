@@ -25,8 +25,6 @@ const app = express();
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
-app.use(express.static('views'))
-app.use(cookieParser())
 app.use(expSession({
     secret: process.env.SECRET,
     saveUninitialized: false,
@@ -35,16 +33,25 @@ app.use(expSession({
     },
     resave:false
 }))
+app.use(cookieParser())
 app.set('views', 'ejs');
 app.set('views', 'views');
 
+app.use(express.static('views'))
 
 
-
-
+let session;
 app.get('/', (req,res) => {
     
-
+    session = req.session;
+    if(session.userid){
+        //console.log(`IF GOOD session userid from index-> ${session.userid}`);
+        res.status(200).render('./index/index.ejs', {user: session.userid, logged: 1})
+    }
+    else{
+        //console.log(`IF NOT GOOD session userid from index-> ${session.userid}`);
+        res.status(200).render('./index/index.ejs', {user: "", logged: 0})
+    }
     
     
     
@@ -56,14 +63,14 @@ app.get('/', (req,res) => {
     }
     */
     
-    const username = req.session.userid
+    //const username = req.session.userid
     
     //console.log(`name is ${req.session.userid.Name}\n`);
-    let name = req.session.userid;
+    //let name = req.session.userid;
     
     
 
-    res.status(200).render('index.ejs', {user: name})
+    //res.status(200).render('index.ejs', {user: name})
 })
 
 app.get('/register', reg.registerGet);

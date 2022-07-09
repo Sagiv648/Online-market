@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 
-<%- include("partials/head.ejs", {page_title: 'Home', css_file: 'index.css', js_file:'apicalls.js'}); %>
+<%- include("./../partials/head.ejs", {page_title: 'Home', css_path: './index.css', js_path:'./index.js'}); %>
 
 <body>
-    <%-include("partials/navbar.ejs", {username: user})%>
+    <%-include("./../partials/navbar.ejs", {username: user, isLogged: logged}); %>
     
 
 
