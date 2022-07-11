@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
-<%-include('./../partials/head.ejs', {page_title: 'Login', css_path: './login.css', js_path: './login.js'}); %>
+<%-include('./../partials/head.ejs', {page_title: page_title, css_path: css_path, js_path: js_path}); %>
 
 <body>
-<%- include('./../partials/navbar.ejs', {username: "", isLogged: 0})%>
+<%- include('./../partials/navbar.ejs', {username: username, isLogged: isLogged})%>
 <br>
 
 <div class="left"></div>
 <div class="right"></div>
-<form>
+<form action="/sendlogin" method="post">
     <div class="email">
-        <label for="email">Email Address:</label><br><br>
+        <label for="email_addr">Email Address:</label><br><br>
     <input class="emailField" type="text" id="emailLogin" name="email_addr" placeholder="Enter your email"><br><br>
     </div>
     
@@ -19,10 +19,25 @@
         <label for="password">Password:</label><br><br>
     <input class="passwordField" type="password" id="passwordLogin" name="password" placeholder="Enter your password">
     </div>
+    
 
-    <div class="errorMsg" id="error">
-        <tr>* Incorrect password or email. *</tr>
+    <% if(isUser == 0)  {%>
+    <div class="errorMsg" id="error" >
+        
+        <p>* Incorrect password or email. *</p>
+        
     </div>
+    <style>
+    .errorMsg{
+    text-align: center;
+    color: red;
+    font-size: medium;
+    font-family: 'Times New Roman', Times, serif;
+    
+}
+    </style>
+    
+    <% } %>
     
 
     <br>

@@ -1,14 +1,8 @@
-import env from 'dotenv'
-import express from 'express'
-import bodyParser from 'body-parser';
-import expSession from 'express-session'
-import bcrypt from 'bcryptjs'
-import cookie from 'cookie-parser'
-import db from './../Models/dbConn.js'
-import acc from './../Models/accounts.js'
-import jwt from 'jsonwebtoken'
-import emailer from 'nodemailer'
 
+import bcrypt from 'bcryptjs'
+import acc from './../Models/accounts.js'
+import emailer from 'nodemailer'
+import moment from 'moment'
 
 
 //NOTE: forum account will be locked until verified through email
@@ -17,20 +11,20 @@ import emailer from 'nodemailer'
 // 2. Cart
 
 //Check password's strength
-const checkPassword = (body) => {
-    if(body.password.length < 8){
+export const checkPassword = (body) => {
+    if(body.length < 8){
         return 0
     }
     let i;
     const validationArr = [0, 0, 0]
-    for(i = 0; i < body.password.length; i++){
-        if(validationArr[0] == 0 && body.password[i] >= 'A' && body.password[i] <= 'Z'){
+    for(i = 0; i < body.length; i++){
+        if(validationArr[0] == 0 && body[i] >= 'A' && body[i] <= 'Z'){
             validationArr[0] = 1;
         }
-        if(validationArr[1] == 0 && body.password[i] >= '0' && body.password[i] <= '9'){
+        if(validationArr[1] == 0 && body[i] >= '0' && body[i] <= '9'){
             validationArr[1] = 1;
         }
-        if(validationArr[2] == 0 && (body.password[i] < 'A' || body.password[i] > 'Z') && (body.password[i] < '0' || body.password[i] > '9')){
+        if(validationArr[2] == 0 && (body[i] < 'A' || body[i] > 'Z') && (body[i] < '0' || body[i] > '9')){
             validationArr[2] = 1;
         }
         
@@ -41,7 +35,7 @@ const checkPassword = (body) => {
 
 //Check email's validation in terms of characters and whether it exists
 //Needs to check the database
-const checkEmail = async (body) => {
+export const checkEmail = async (body) => {
 
     const testEmail = body.email_addr.split('@')
     
@@ -60,7 +54,7 @@ const checkEmail = async (body) => {
 }
 
 //Check phone number's validation in terms of prefix and length (will only apply to Israel)
-const checkPhoneNumber = (body) => {
+export const checkPhoneNumber = (body) => {
     if(body.phone_number.length != 10 || body.phone_number[0] != 0) {
         return 0
     }
@@ -68,10 +62,13 @@ const checkPhoneNumber = (body) => {
 }
 
 const registerGet = (req,res) => {
-    console.log("(render register page)")
+    
+    return res.status(200).json({
+        Message: "Register"
+    })
 }
 
-const emailVerification = async (registree) => {
+export const emailVerification = async (registree) => {
     const transport = emailer.createTransport({
             service: 'gmail',
             port:465,
@@ -86,6 +83,9 @@ const emailVerification = async (registree) => {
             }
             
         })
+
+        const verNumber = between(1000,9999999);
+
         var message = {
                     from: process.env.EMAILSENDER,
                     to: registree.email_addr,
@@ -94,7 +94,7 @@ const emailVerification = async (registree) => {
                     <h2 style="color:blue;"> Hello ${registree.first_name} ${registree.last_name} </h2>
                     <p>We thank you for giving our market a chance.</P><br> 
                     <p>However in order to fully browse our stock you will need to verify your account, the verification code is listed below:</p>
-                    <p>Your verification code is ${between(1000,9999999)}</p><br>
+                    <p>Your verification code is ${verNumber}</p><br>
                     <p>NOTE: The verification code will expire in 10 minutes.</p>`
                     };
 
@@ -106,15 +106,17 @@ const emailVerification = async (registree) => {
             console.log(`Error: \n ${err}`);
          })
 
+    return `${verNumber}-${moment.now()}`
+
 }
 
-const registerPost = async (req,res) => {
+const registerPost = async (req,res,next) => {
     //TODO: Integrate session functionality
     const registree = req.body;
 
     //---- details validation ----
     let test = await checkEmail(registree)
-    test *= checkPassword(registree) * checkPhoneNumber(registree)
+    test *= checkPassword(registree.password) * checkPhoneNumber(registree)
     if(test == 0){
         return res.status(400).json({
             error: "error occured with user"
@@ -134,7 +136,9 @@ const registerPost = async (req,res) => {
 
     })
     .then(result => {
-        res.status(200).redirect('/')
+        return res.status(200).json({
+            Message: `Created account for ${registree.first_name} ${registree.last_name} - ${registree.email_addr}`
+        })
     })
     .catch(err => {
         console.log(`Error:\n ${err}`);
@@ -143,7 +147,11 @@ const registerPost = async (req,res) => {
         })
     })
     //--- end of password encryption ----
-    
+    const check = await emailVerification(registree)
+    const checksum = encodeURIComponent(check)
+    //res.redirect('/verification?ver=' + checksum)
+    req.body = checksum
+    return next()
 
 
 }

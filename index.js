@@ -1,13 +1,19 @@
 import env from 'dotenv'
 import express from 'express'
 import bodyParser from 'body-parser';
-import expSession from 'express-session'
-import bcrypt from 'bcryptjs'
 import cookieParser from 'cookie-parser'
 import db from './Models/dbConn.js'
 import reg from './Controllers/register.js'
 import login from './Controllers/login.js'
-import Session from 'express-session';
+import session from 'express-session';
+import sequelizeStore from 'connect-session-sequelize'
+import { logoutGet, logoutDelete } from './Controllers/logout.js';
+import { settingsGet, settingsPatch } from './Controllers/settings.js';
+
+import { emailVerGet, emailVerPost } from './Controllers/emailVerification.js';
+
+const seqStore = sequelizeStore(session.Store);
+
 
 
 
@@ -25,14 +31,30 @@ const app = express();
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
-app.use(expSession({
+
+const extendDefaultFields = (defaults, session) => {
+  return {
+    data: defaults.data,
+    expires: defaults.expires,
+    userId: session.userId,
+  };
+}
+
+
+app.use(session({
     secret: process.env.SECRET,
     saveUninitialized: false,
+    store: new seqStore({
+        db: db,
+        table: "session",
+        extendDefaultFields: extendDefaultFields
+    }),
     cookie: {
         maxAge: sessionLength
     },
     resave:false
 }))
+
 app.use(cookieParser())
 app.set('views', 'ejs');
 app.set('views', 'views');
@@ -40,46 +62,39 @@ app.set('views', 'views');
 app.use(express.static('views'))
 
 
-let session;
-app.get('/', (req,res) => {
-    
-    session = req.session;
-    if(session.userid){
-        //console.log(`IF GOOD session userid from index-> ${session.userid}`);
-        res.status(200).render('./index/index.ejs', {user: session.userid, logged: 1})
-    }
-    else{
-        //console.log(`IF NOT GOOD session userid from index-> ${session.userid}`);
-        res.status(200).render('./index/index.ejs', {user: "", logged: 0})
-    }
-    
-    
-    
-    /*
-    if(req.session.userid == undefined){
-        return res.status(400).json({
-            res: "session is null"
-        })
-    }
-    */
-    
-    //const username = req.session.userid
-    
-    //console.log(`name is ${req.session.userid.Name}\n`);
-    //let name = req.session.userid;
-    
-    
 
-    //res.status(200).render('index.ejs', {user: name})
+
+
+app.get('/', async (req,res) => {
+
+    
+    req.sessionStore.get(req.session.id, (err, session) => {
+        if(!err){
+            return res.status(200).json({
+                Message: `Welcome ${session.userid.username}`
+            })
+        }
+        else{
+            return res.status(200).json({
+                Message: "This is online market API"
+            })      
+        }      
+    })
 })
 
 app.get('/register', reg.registerGet);
-app.post('/sendregister', reg.registerPost);
-
+app.post('/register', reg.registerPost, emailVerGet);
+app.get('/verificiation', emailVerGet);
+app.post('/verify', emailVerPost);
 
 app.get('/login', login.loginGet);
-app.post('/sendlogin', login.loginPost);
+app.post('/login', login.loginPost);
 
+app.get('/logout', logoutGet);
+app.delete('/logout', logoutDelete)
+
+app.get('/settings', settingsGet);
+app.patch('/settings', settingsPatch)
 
 db.sync()
 .then(result => {
