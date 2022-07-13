@@ -12,34 +12,64 @@ dotnev.config();
 
 export const emailVerGet = (req,res) => {
 
-
+    //console.log(req);
     
     return res.status(200).json({
-        Msg: "Email sent."
+        Msg_email: "email sent"
+        
     })
     
 }
 
 export const emailVerPost = async (req,res) => {
 
-req.sessionStore.get(req.session.id, (err, session) => {
-    if(session){
-        return res.status(200).json({
-            session
+    
+    const {verification_code } = req.body
+
+    const id_check = verification_code.substr(7,verification_code.length)
+
+
+    const accounts_list = await accounts.findAll({where: {id: id_check}});
+    if(accounts_list.length == 0){
+        return res.status(500).json({
+            fault: "server fault"
+        })
+    }
+
+    const lastChecksum = accounts_list[0].get('lastChecksum');
+    const stamp = accounts_list[0].get('lastChecksumStamp');
+
+    const now = moment.now();
+
+    if(now - stamp >= 720000){
+        return res.status(400).json({
+            client_fault : `${(now-stamp) / 1000 / 60} minutes passed`
         })
     }
     else{
-        return res.status(400).json({
-            err
-        })
+        if(lastChecksum == verification_code){
+            console.log(`${lastChecksum} <-> ${verification_code}`);
+            accounts_list[0].update({lastChecksum: "", lastChecksumStamp: 0, isLocked: false},
+                                        {where: {id: id_check}})
+            .then(result =>{
+                
+            })
+            .catch(err => {
+                console.log(err);
+            })
+
+            return res.status(200).json({
+                welcome: `You may now log in and access all features ${accounts_list[0].get('first_name')} ${accounts_list[0].get('last_name')}`
+            })
+        }
     }
-})
+
+    return res.status(400).json({
+        user_fault: "incorrect code"
+    })
 
 
-
-
-
-
+ }
 
 
 
@@ -101,4 +131,4 @@ req.sessionStore.get(req.session.id, (err, session) => {
     })
     */
     
-}
+

@@ -4,7 +4,7 @@ import acc from './../Models/accounts.js'
 import emailer from 'nodemailer'
 import moment from 'moment'
 import session from 'express-session'
-
+import axios from 'axios'
 //NOTE: forum account will be locked until verified through email
 // A locked forum account means that the account will NOT have access to the following:
 // 1. Store route
@@ -68,7 +68,7 @@ const registerGet = (req,res) => {
     })
 }
 
-export const emailVerification = async (registree) => {
+export const emailVerification = async (registree, id) => {
     const transport = emailer.createTransport({
             service: 'gmail',
             port:465,
@@ -84,7 +84,8 @@ export const emailVerification = async (registree) => {
             
         })
 
-        const verNumber = between(1000,9999999);
+        const verNumber = between(1000000,9999999);
+
 
         var message = {
                     from: process.env.EMAILSENDER,
@@ -94,7 +95,7 @@ export const emailVerification = async (registree) => {
                     <h2 style="color:blue;"> Hello ${registree.first_name} ${registree.last_name} </h2>
                     <p>We thank you for giving our market a chance.</P><br> 
                     <p>However in order to fully browse our stock you will need to verify your account, the verification code is listed below:</p>
-                    <p>Your verification code is ${verNumber}</p><br>
+                    <p>Your verification code is ${verNumber}${id}</p><br>
                     <p>NOTE: The verification code will expire in 10 minutes.</p>`
                     };
 
@@ -106,7 +107,7 @@ export const emailVerification = async (registree) => {
             console.log(`Error: \n ${err}`);
          })
 
-    return `${verNumber}-${moment.now()}`
+    return `${verNumber}${id}-${moment.now()}`
 
 }
 
@@ -124,51 +125,63 @@ const registerPost = async (req,res,next) => {
     }
     //--- end of details validation ----
 
-    const check = await emailVerification(registree)
-    const checksumArr = check.split('-');
-    const checkSumTimestamp = parseInt(checksumArr[1])
     //--- password encryption ----
     const encrypedPass = await bcrypt.hash(registree.password, 10);
-    let id;
-    acc.create({
+    
+    const account = await acc.create({
         first_name: registree.first_name,
         last_name: registree.last_name,
         phone_number: registree.phone_number,
         email_addr: registree.email_addr,
         password: encrypedPass,
         isLocked: true,
-        lastChecksum: checksumArr[0],
-        lastChecksumStamp: checkSumTimestamp
+        lastChecksum: "",
+        lastChecksumStamp: 0
 
     })
+    
+    const check = await emailVerification(registree, account.get('id'))
+    const checksumArr = check.split('-');
+    const checkSumTimestamp = parseInt(checksumArr[1])
+    account.update({lastChecksum: checksumArr[0], lastChecksumStamp: checkSumTimestamp}, {where: {id: account.get('id')}})
+    .then( result => {
+        //return next();
+    })
+    .catch(err => {
+        return res.status(500).json(err)
+    })
+    
+    return next();
+    /*
+    .then(result =>  {
+        id = result.get('id');
 
-    .then(result => {
-
-        console.log("The result of the creation ->");
-        console.log(result);
-        req.session.userid = {username: `${registree.first_name} ${registree.last_name}`,
-                              id: result.get('id'),
-                              verified: !(result.get('isLocked'))}
-        req.session.save((err) => {
-            console.log("Session saved");
-        })
+        const check = await emailVerification(registree, id)
+    const checksumArr = check.split('-');
+    const checkSumTimestamp = parseInt(checksumArr[1])
+    acc.update({lastChecksum: checksumArr[0], lastChecksumStamp: checkSumTimestamp}, {where: {id: id}})
+    .then( result => {
+        return next();
+    })
+    .catch(err => {
+        return res.status(500).json(err)
+    })
         
-        /*
-        return res.status(200).json({
-            Message: `Created account for ${registree.first_name} ${registree.last_name} - ${registree.email_addr}`
-        })
-        */
     })
     .catch(err => {
         console.log(`Error:\n ${err}`);
         
     })
+    */
+    
+    
     //--- end of password encryption ----
     
     //res.redirect('/verification?ver=' + checksum)
     //req.body = {first_name: registree.first_name, last_name: registree.last_name, email_addr: registree.email_addr ,checksum : checksum, uid: id}
-    return res.status(200).redirect('/verification'
-    )
+    //req.body = {test: 'yes'}
+    //return next()
+    
 
 
 }
