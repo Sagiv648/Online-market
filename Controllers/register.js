@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import acc from './../Models/accounts.js'
 import emailer from 'nodemailer'
 import moment from 'moment'
-
+import session from 'express-session'
 
 //NOTE: forum account will be locked until verified through email
 // A locked forum account means that the account will NOT have access to the following:
@@ -124,34 +124,51 @@ const registerPost = async (req,res,next) => {
     }
     //--- end of details validation ----
 
+    const check = await emailVerification(registree)
+    const checksumArr = check.split('-');
+    const checkSumTimestamp = parseInt(checksumArr[1])
     //--- password encryption ----
     const encrypedPass = await bcrypt.hash(registree.password, 10);
+    let id;
     acc.create({
         first_name: registree.first_name,
         last_name: registree.last_name,
         phone_number: registree.phone_number,
         email_addr: registree.email_addr,
         password: encrypedPass,
-        isLocked: true
+        isLocked: true,
+        lastChecksum: checksumArr[0],
+        lastChecksumStamp: checkSumTimestamp
 
     })
+
     .then(result => {
+
+        console.log("The result of the creation ->");
+        console.log(result);
+        req.session.userid = {username: `${registree.first_name} ${registree.last_name}`,
+                              id: result.get('id'),
+                              verified: !(result.get('isLocked'))}
+        req.session.save((err) => {
+            console.log("Session saved");
+        })
+        
+        /*
         return res.status(200).json({
             Message: `Created account for ${registree.first_name} ${registree.last_name} - ${registree.email_addr}`
         })
+        */
     })
     .catch(err => {
         console.log(`Error:\n ${err}`);
-        return res.status(500).json({
-            error: err
-        })
+        
     })
     //--- end of password encryption ----
-    const check = await emailVerification(registree)
-    const checksum = encodeURIComponent(check)
+    
     //res.redirect('/verification?ver=' + checksum)
-    req.body = checksum
-    return next()
+    //req.body = {first_name: registree.first_name, last_name: registree.last_name, email_addr: registree.email_addr ,checksum : checksum, uid: id}
+    return res.status(200).redirect('/verification'
+    )
 
 
 }

@@ -16,5 +16,7 @@ export default dbConn.define('account', {
     phone_number: sequelize.STRING,
     email_addr: sequelize.STRING,
     password: sequelize.STRING,
-    isLocked: sequelize.BOOLEAN
+    isLocked: sequelize.BOOLEAN,
+    lastChecksum: sequelize.STRING,
+    lastChecksumStamp: sequelize.BIGINT 
 })

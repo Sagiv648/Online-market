@@ -9,9 +9,11 @@ import session from 'express-session';
 import sequelizeStore from 'connect-session-sequelize'
 import { logoutGet, logoutDelete } from './Controllers/logout.js';
 import { settingsGet, settingsPatch } from './Controllers/settings.js';
-
+import accounts from './Models/accounts.js'
 import { emailVerGet, emailVerPost } from './Controllers/emailVerification.js';
-
+//import category from './Models/category.js'
+//import order from './Models/order.js'
+//import product from './Models/products.js'
 const seqStore = sequelizeStore(session.Store);
 
 
@@ -84,8 +86,66 @@ app.get('/', async (req,res) => {
 
 app.get('/register', reg.registerGet);
 app.post('/register', reg.registerPost, emailVerGet);
-app.get('/verificiation', emailVerGet);
-app.post('/verify', emailVerPost);
+app.get('/verification', emailVerGet);
+
+app.post('/verify', (req, res) => {
+    
+    console.log(`session id -> ${req.session.id}`);
+    req.sessionStore.get(req.session.id, (err, session) => {
+        console.log(`session id in -> ${req.session.id}`);
+        if(session != null){
+
+            //console.log(`session id -> ${session.id}`);
+            console.log(`user name -> ${session.userid.username}`);
+            const acc = accounts.findAll({where: {id: session.userid.id}})
+            if(acc.length == 0){
+                return res.status(400).json({
+                    error: "need to register first"
+                })
+            }
+            const stamp = acc[0].get('lastChecksumStamp');
+            const checksum = acc[0].get('lastChecksum');
+
+            const now = moment.now();
+            if(now - stamp >= 720000){
+                return res.status(400).json({
+                    error: `time passed ${(now - stamp) / 1000 / 60}`
+                })
+            }
+            else{
+                if(checksum == req.verification_code){
+                    const updated = acc[0].update({isLocked: false,
+                                                        lastChecksum: "",
+                                                         lastChecksumStamp: 0},
+                                                        {where: {id: session.userid.id}})
+                    if(updated == 0){
+                        return res.status(500).json({
+                            error: "server error with updated"
+                        })
+                    }
+                    req.session.destroy(err => {
+                        return res.status(200).json({
+                            msg: "Successfully verified your account, may log in now"
+                        })
+                    })
+                    
+                }
+                return res.status(400).json({
+                    msg: "Incorrect code"
+                })
+
+
+            }
+        }
+        else{
+            return res.status(400).json({
+                errorAccess: "access denied with session",
+                err
+            })
+        }
+    })
+    
+});
 
 app.get('/login', login.loginGet);
 app.post('/login', login.loginPost);
