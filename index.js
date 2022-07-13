@@ -9,11 +9,10 @@ import session from 'express-session';
 import sequelizeStore from 'connect-session-sequelize'
 import { logoutGet, logoutDelete } from './Controllers/logout.js';
 import { settingsGet, settingsPatch } from './Controllers/settings.js';
-import accounts from './Models/accounts.js'
 import { emailVerGet, emailVerPost } from './Controllers/emailVerification.js';
-//import category from './Models/category.js'
-//import order from './Models/order.js'
-//import product from './Models/products.js'
+
+import storeRouter from './Controllers/store.js'
+import cartRouter from './Controllers/cart.js'
 const seqStore = sequelizeStore(session.Store);
 
 
@@ -70,10 +69,12 @@ app.use(express.static('views'))
 app.get('/', async (req,res) => {
     
     
+
     req.sessionStore.get(req.session.id, (err, session) => {
         if(!err){
             return res.status(200).json({
                 Message: `Welcome ${session.userid.username}`
+                
             })
         }
         else{
@@ -98,6 +99,9 @@ app.delete('/logout', logoutDelete)
 
 app.get('/settings', settingsGet);
 app.patch('/settings', settingsPatch)
+
+app.use('/store', storeRouter)
+app.use('/cart', cartRouter)
 
 db.sync()
 .then(result => {

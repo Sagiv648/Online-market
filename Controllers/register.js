@@ -152,38 +152,7 @@ const registerPost = async (req,res,next) => {
     })
     
     return next();
-    /*
-    .then(result =>  {
-        id = result.get('id');
-
-        const check = await emailVerification(registree, id)
-    const checksumArr = check.split('-');
-    const checkSumTimestamp = parseInt(checksumArr[1])
-    acc.update({lastChecksum: checksumArr[0], lastChecksumStamp: checkSumTimestamp}, {where: {id: id}})
-    .then( result => {
-        return next();
-    })
-    .catch(err => {
-        return res.status(500).json(err)
-    })
-        
-    })
-    .catch(err => {
-        console.log(`Error:\n ${err}`);
-        
-    })
-    */
     
-    
-    //--- end of password encryption ----
-    
-    //res.redirect('/verification?ver=' + checksum)
-    //req.body = {first_name: registree.first_name, last_name: registree.last_name, email_addr: registree.email_addr ,checksum : checksum, uid: id}
-    //req.body = {test: 'yes'}
-    //return next()
-    
-
-
 }
 
 
