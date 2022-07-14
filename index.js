@@ -10,7 +10,7 @@ import sequelizeStore from 'connect-session-sequelize'
 import { logoutGet, logoutDelete } from './Controllers/logout.js';
 import { settingsGet, settingsPatch } from './Controllers/settings.js';
 import { emailVerGet, emailVerPost } from './Controllers/emailVerification.js';
-
+import adminRouter from './admin.js'
 import storeRouter from './Controllers/store.js'
 import cartRouter from './Controllers/cart.js'
 const seqStore = sequelizeStore(session.Store);
@@ -102,7 +102,7 @@ app.patch('/settings', settingsPatch)
 
 app.use('/store', storeRouter)
 app.use('/cart', cartRouter)
-
+app.use('/admin', adminRouter);
 db.sync()
 .then(result => {
     app.listen(details.port, details.host, ()=> {
