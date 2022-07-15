@@ -1,9 +1,8 @@
-import {emailVerification} from './register.js'
-import axios from 'axios'
+import {emailVerification, adjustChecksum} from './../utilities.js'
 import dotnev from 'dotenv'
 import moment from 'moment';
 import accounts from './../Models/accounts.js'
-import session from 'express-session'
+
 
 
 
@@ -12,23 +11,52 @@ dotnev.config();
 
 export const emailVerGet = (req,res) => {
 
-    //console.log(req);
     
-    return res.status(200).json({
-        Msg_email: "email sent"
-        
+    //If the session exists, it means the user is logged in BUT has his account locked and unverified ->
+    // therefore generate a checksum key to his email with the current checksum keys convention
+    
+    req.sessionStore.get(req.session.id, async (err, session) => {
+        if(session){
+            
+            
+            const logineeVerify = await accounts.findAll({where: {id: session.userid.id}});
+
+            if(logineeVerify.length == 0){
+                res.status(500).json({
+                    fault: "server fault"
+                })
+                
+            }
+            const {dataValues} = logineeVerify[0]; 
+            const isUpdated = await adjustChecksum(dataValues, 0);
+            if(isUpdated.length > 0){
+                res.status(200).json({
+                    Msg_email_user: "email sent loginee"
+                })
+            }
+        }
+        else{
+            
+            res.status(200).json({
+            msg_email: "email sent registeree"
+            })
+        }
+       
     })
+    
+    
+    
+    return res;
     
 }
 
 export const emailVerPost = async (req,res) => {
 
-    
     const {verification_code } = req.body
 
     const id_check = verification_code.substr(7,verification_code.length)
 
-
+    
     const accounts_list = await accounts.findAll({where: {id: id_check}});
     if(accounts_list.length == 0){
         return res.status(500).json({
@@ -47,8 +75,8 @@ export const emailVerPost = async (req,res) => {
         })
     }
     else{
+        
         if(lastChecksum == verification_code){
-            console.log(`${lastChecksum} <-> ${verification_code}`);
             accounts_list[0].update({lastChecksum: "", lastChecksumStamp: 0, isLocked: false},
                                         {where: {id: id_check}})
             .then(result =>{

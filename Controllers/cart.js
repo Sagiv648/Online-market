@@ -25,6 +25,8 @@ cartRouter.get('/', (req,res) => {
 
             const ordersById = await order.findAll({where: {account_id: session.userid.id}})
             
+            
+
     
             return res.status(200).json({
                 username: session.userid.username,

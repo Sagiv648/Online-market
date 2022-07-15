@@ -9,6 +9,11 @@ import acc from './../Models/accounts.js'
 import {  checkPassword } from './register.js';
 import login from './login.js';
 
+//TODO:
+/*
+1. Implement a
+*/
+
 
 
 const settingsGetMethod = (req, res) => {
@@ -17,7 +22,6 @@ const settingsGetMethod = (req, res) => {
         
         if(session){
 
-            //const email = parseFromSession(session.userid.email)
             const id = session.userid.id
             const account = await acc.findAll({where: {id : id}})
             if(account.length == 0){
@@ -83,7 +87,6 @@ const settingsPatchMethod = (req, res) => {
                 })
             }
 
-            //const newData = destructRequestBody(req.body)   //1.keys : Keys | 2. values : values to edit
             var newData = { first_name: account[0].get('first_name'),
                             last_name: account[0].get('last_name'),
                             phone_number: account[0].get('phone_number'),
@@ -157,80 +160,6 @@ const settingsPatchMethod = (req, res) => {
         
     })
 }
-
-/*
-req.sessionStore.get(req.session.id, async (err,session) => {
-        if(err){
-            return res.status(200).json({
-                Message: "Access denied"
-            })      
-        }
-        const email = parseFromSession(session.userid.email);
-        const account = await acc.findAll({where: {email_addr: email}})
-
-        const parameters = parseFromJson(req.body)
-        let hasPasswordParams = 1
-        parameters.forEach(x => hasPasswordParams *= x == 'old_password' || x == 'new_password' ? 1: 0)
-
-        if(!hasPasswordParams){
-           acc.update(req.body, {
-            where: {email_addr: email}
-           })
-           .then(result => {
-                return res.status(200).json({
-                    Message: "Settings were successfully edited no password"
-                })
-           })
-           .catch(err => {
-                return res.status(500).json({
-                    Message: "Error occured with server"
-                })
-           })
-        }
-        const oldHash = account[0].get('password')
-        console.log(`Old has -> ${oldHash}`);
-        const oldPassword = req.body.old_password
-        const test = await bcrypt.compare(oldPassword, oldHash)
-        if(!test){
-            return res.status(400).json({
-                Message: "Incorrect password"
-            })
-        }
-        
-        if(!checkPassword(req.body.new_password)){
-
-            return res.status(400).json({
-                Message: "Password needs to be stronger"
-            })
-        }
-        const newPass = await bcrypt.hash(req.body.new_password, 10);
-        //TODO: handle the separate parameters
-        const newData = getResponseBody(req.body);
-        newData['password'] = newPass;
-       
-        acc.update(newData,
-            {
-                where: {email_addr: email}
-            })
-            .then( result =>{
-                return res.status(200).json({
-                    Message: "Settings were successfully edited with password"
-                })
-            })
-        .catch(err => {
-            return res.status(500).json({
-                Message: "Error occured with server"
-            })
-        })
-            
-            
-            
-        
-        //console.log(req.body);
-        
-    })
-*/
-
 
 
 export const settingsGet = settingsGetMethod;

@@ -13,10 +13,15 @@ import { emailVerGet, emailVerPost } from './Controllers/emailVerification.js';
 import adminRouter from './admin.js'
 import storeRouter from './Controllers/store.js'
 import cartRouter from './Controllers/cart.js'
+import scheduler from 'node-schedule'
+import {removeUnverifiedAccounts} from './utilities.js'
 const seqStore = sequelizeStore(session.Store);
 
 
+const job = scheduler.scheduleJob('0 0 0 * * ?', async () => await removeUnverifiedAccounts());
 
+//0 * * ? * *
+//0 0 0 * * ? => everyday at 12am
 
 const sessionLength = 86400000
 const details = {
