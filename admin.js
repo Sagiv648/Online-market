@@ -1,13 +1,5 @@
 import env from 'dotenv'
 import express from 'express'
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser'
-import db from './Models/dbConn.js'
-import reg from './Controllers/register.js'
-import login from './Controllers/login.js'
-import session from 'express-session';
-import sequelizeStore from 'connect-session-sequelize'
-
 import products from './Models/products.js';
 import categories from './Models/category.js';
 
@@ -24,42 +16,15 @@ env.config();
 const adminRouter = express.Router();
 
 
-const adminIdentityVerification = (req,res, next) => {
-    if(!req.query){
-        return res.status(403).json({
-            fault: "access denied."
-        })
-    }
-    const {admname, admpassword, admemail} = req.query;
-    
-    if(!admname || !admpassword || !admemail){
-         res.status(403).json({
-            fault: "access denied."
-        })
-    }
-    else if(admname == process.env.ADMIN_USERNAME && 
-            admpassword == process.env.ADMIN_PASSWORD && 
-            admemail == process.env.ADMIN_EMAIL){
-            next();
-    }
-    else{
-         res.status(403).json({
-            fault: "access denied."
-        })
-    }
-    return res;
-
-}
-
-adminRouter.get('/', adminIdentityVerification, (req,res) => {
+adminRouter.get('/', (req,res) => {
     return res.status(200).json({
-        adm_message: "logged in as an admin"
+        adm_message: "admin"
         
     })
     
 })
 
-adminRouter.get('/adminprods', adminIdentityVerification, async (req,res) => {
+adminRouter.get('/adminprods', async (req,res) => {
     const {catid} = req.query;
     if(catid){
         const prodsByCategory = await products.findAll({where: {category_id: catid}});
@@ -76,7 +41,7 @@ adminRouter.get('/adminprods', adminIdentityVerification, async (req,res) => {
 })
 
 //1. add a post request to add categories to the store (category table)
-adminRouter.post('/adminaddcat', adminIdentityVerification, async (req,res) => {
+adminRouter.post('/adminaddcat', async (req,res) => {
     const {name} = req.query;
     if(!name.length){
         return res.status(400).json({
@@ -91,9 +56,9 @@ adminRouter.post('/adminaddcat', adminIdentityVerification, async (req,res) => {
 
 
 //2. add a post request to add products to the store (products table)
-adminRouter.post('/adminaddprod', adminIdentityVerification, async (req,res) => {
+adminRouter.post('/adminaddprod', async (req,res) => {
     const {name, catname, stock, price} = req.query;
-    const test = name.length * catid.length * stock.length * price.length;
+    const test = name.length * catname.length * stock.length * price.length;
     if(!test){
         return res.status(400).json({
             fault: "query fault"

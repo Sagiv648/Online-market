@@ -1,18 +1,11 @@
-import env from 'dotenv'
-import express from 'express'
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser'
-import bcrypt from 'bcryptjs'
-import session from 'express-session';
-import sequelizeStore from 'connect-session-sequelize'
-import acc from './../Models/accounts.js'
-import {  checkPassword } from './register.js';
-import login from './login.js';
 
-//TODO:
-/*
-1. Implement a
-*/
+import bcrypt from 'bcryptjs'
+
+import acc from './../Models/accounts.js'
+import { checkPassword } from './register.js';
+
+
+
 
 
 
@@ -71,14 +64,15 @@ const checkEmail = (email_addr) => {
     return 1
 }
 
-const settingsPatchMethod = (req, res) => {
+const settingsPatchMethod = (req, res, next) => {
+
 
     req.sessionStore.get(req.session.id, async (err, session) => {
 
         if(session != null){
             
             const id = req.session.userid.id;
-            
+
             const account = await acc.findAll({where: {id: id}})
 
             if(account.length == 0){
@@ -137,6 +131,7 @@ const settingsPatchMethod = (req, res) => {
             
                 account[0].update(newData, {where :{id: id }})
                 .then( result => {
+
                     req.session.userid.username = `${newData.first_name} ${newData.last_name}`
                     req.session.save();
                     return res.status(200).json({
@@ -152,7 +147,7 @@ const settingsPatchMethod = (req, res) => {
         }
 
         else{
-            return res.status(200).json({
+            return res.status(400).json({
                 Error: err
             })
         }

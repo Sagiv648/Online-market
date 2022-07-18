@@ -1,5 +1,5 @@
 import sequelize from 'sequelize'
-import { INTEGER } from 'sequelize'
+
 import dbConn from './dbConn.js'
 
 
@@ -17,6 +17,9 @@ export default dbConn.define('account', {
     email_addr: sequelize.STRING,
     password: sequelize.STRING,
     isLocked: sequelize.BOOLEAN,
+    isPrivilieged: {
+        type:sequelize.BOOLEAN,
+        allowNull: false,},
     lastChecksum: sequelize.STRING,
     lastChecksumStamp: sequelize.BIGINT 
 })

@@ -20,7 +20,7 @@ export const emailVerGet = (req,res) => {
             
             
             const logineeVerify = await accounts.findAll({where: {id: session.userid.id}});
-
+            //console.log(logineeVerify[0]);
             if(logineeVerify.length == 0){
                 res.status(500).json({
                     fault: "server fault"
@@ -56,8 +56,8 @@ export const emailVerPost = async (req,res) => {
 
     const id_check = verification_code.substr(7,verification_code.length)
 
-    
     const accounts_list = await accounts.findAll({where: {id: id_check}});
+
     if(accounts_list.length == 0){
         return res.status(500).json({
             fault: "server fault"
@@ -77,15 +77,17 @@ export const emailVerPost = async (req,res) => {
     else{
         
         if(lastChecksum == verification_code){
-            accounts_list[0].update({lastChecksum: "", lastChecksumStamp: 0, isLocked: false},
-                                        {where: {id: id_check}})
-            .then(result =>{
-                
-            })
-            .catch(err => {
-                console.log(err);
-            })
 
+            const verified = await accounts_list[0].update({lastChecksum: "", lastChecksumStamp: 0, isLocked: false},
+                                        {where: {id: id_check}})
+            if(verified){
+                req.sessionStore.get(req.session.id, (err, session) => {
+                    if(session){
+                        req.session.userid.verified = true;
+                        req.session.save();
+                    }
+                })
+            }
             return res.status(200).json({
                 welcome: `You may now log in and access all features ${accounts_list[0].get('first_name')} ${accounts_list[0].get('last_name')}`
             })

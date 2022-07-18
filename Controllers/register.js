@@ -1,10 +1,7 @@
 
 import bcrypt from 'bcryptjs'
 import acc from './../Models/accounts.js'
-import emailer from 'nodemailer'
-import moment from 'moment'
-import session from 'express-session'
-import axios from 'axios'
+
 
 import {emailVerification, adjustChecksum} from './../utilities.js'
 //NOTE: forum account will be locked until verified through email
@@ -63,59 +60,14 @@ export const checkPhoneNumber = (body) => {
     return 1;
 }
 
-const registerGet = (req,res) => {
+export const registerGet = (req,res) => {
     
     return res.status(200).json({
         Message: "Register"
     })
 }
-/*
-export const emailVerification = async (user, id) => {
-    const transport = emailer.createTransport({
-            service: 'gmail',
-            port:465,
-            secure: true,
-            secureConnection: false,
-            auth: {
-                user: process.env.EMAILSENDER,
-                pass: process.env.APPPASSWORD, 
-            },
-            tls:{
-                rejectUnAuthorized:true
-            }
-            
-        })
 
-        const verNumber = between(1000000,9999999);
-        const checksum = await bcrypt.hash(verNumber, 5);
-
-        var message = {
-                    from: process.env.EMAILSENDER,
-                    to: user.email_addr,
-                    subject: "Online market verification",
-                    html: `
-                    <h2 style="color:blue;"> Hello ${user.first_name} ${user.last_name} </h2>
-                    <p>We thank you for giving our market a chance.</P><br> 
-                    <p>However in order to fully browse our stock you will need to verify your account, the verification code is listed below:</p>
-                    <p>Your verification code is ${verNumber}${id}</p><br>
-                    <p>NOTE: The verification code will expire in 10 minutes.</p><br>
-                    <p>Unverified accounts are deleted everyday on 00:00</p>`
-                    };
-
-         transport.sendMail(message)
-         .then(response => {
-            console.log(`Email: email sent:\n ${response.envelope}`);
-         })
-         .catch(err => {
-            console.log(`Error: \n ${err}`);
-         })
-
-    return `${checksum}${id}-${moment.now()}`
-
-}
-*/
-
-const registerPost = async (req,res,next) => {
+export const registerPost = async (req,res,next) => {
     
     const registree = req.body;
 
@@ -139,6 +91,7 @@ const registerPost = async (req,res,next) => {
         email_addr: registree.email_addr,
         password: encrypedPass,
         isLocked: true,
+        isPrivilieged: false,
         lastChecksum: "",
         lastChecksumStamp: 0
 
@@ -147,35 +100,20 @@ const registerPost = async (req,res,next) => {
     const {dataValues} = account;
     const registred = await adjustChecksum(dataValues, 1);
     if(registred > 0){
-        return next();
+        return res.status(201).json({
+            registeree_email: "email sent"
+        });
     }
     
     return res.status(500).json({
         fault: "server fault"
     })
 
-    /*
-    const check = await emailVerification(registree, account.get('id'))
-    const checksumArr = check.split('-');
-    const checkSumTimestamp = parseInt(checksumArr[1])
-    account.update({lastChecksum: checksumArr[0], lastChecksumStamp: checkSumTimestamp}, {where: {id: account.get('id')}})
-    .then( result => {
-        //return next();
-    })
-    .catch(err => {
-        return res.status(500).json(err)
-    })
-    
-    return next();
-    */
 }
 
 
 
-export default {
-    registerGet: registerGet,
-    registerPost: registerPost
-}
+
 
 
 

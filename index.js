@@ -3,8 +3,8 @@ import express from 'express'
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser'
 import db from './Models/dbConn.js'
-import reg from './Controllers/register.js'
-import login from './Controllers/login.js'
+import { registerGet, registerPost} from './Controllers/register.js'
+import {loginGet, loginPost} from './Controllers/login.js'
 import session from 'express-session';
 import sequelizeStore from 'connect-session-sequelize'
 import { logoutGet, logoutDelete } from './Controllers/logout.js';
@@ -14,16 +14,16 @@ import adminRouter from './admin.js'
 import storeRouter from './Controllers/store.js'
 import cartRouter from './Controllers/cart.js'
 import scheduler from 'node-schedule'
-import {removeUnverifiedAccounts} from './utilities.js'
+import {removeUnverifiedAccounts, authenticate, adminAuthenticate, adminIdentityVerification} from './utilities.js'
+import moment from 'moment';
 const seqStore = sequelizeStore(session.Store);
+
 
 
 const job = scheduler.scheduleJob('0 0 0 * * ?', async () => await removeUnverifiedAccounts());
 
-//0 * * ? * *
-//0 0 0 * * ? => everyday at 12am
-
 const sessionLength = 86400000
+
 const details = {
     port: process.env.PORT,
     host: process.env.HOST
@@ -68,46 +68,43 @@ app.set('views', 'views');
 app.use(express.static('views'))
 
 
-
-
-
-app.get('/', async (req,res) => {
+app.get('/' ,async (req,res) => {
     
-    
-
     req.sessionStore.get(req.session.id, (err, session) => {
-        if(!err){
-            return res.status(200).json({
-                Message: `Welcome ${session.userid.username}`
-                
+        if(session){
+            res.status(200).json({
+                welcome: `hello ${req.session.userid.username}`,
+                msg: "api"
             })
         }
         else{
-            return res.status(200).json({
-                Message: "This is online market API"
-            })      
-        }      
-    })
+            res.status(200).json({
+                welcome: `hello guest`,
+                msg: "api"
+            })
+        }
+    })   
 })
 
-app.get('/register', reg.registerGet);
-app.post('/register', reg.registerPost, emailVerGet);
+app.get('/register', registerGet);
+app.post('/register', registerPost);
 app.get('/verification', emailVerGet);
 
 app.post('/verify', emailVerPost);
 
-app.get('/login', login.loginGet);
-app.post('/login', login.loginPost);
+app.get('/login', loginGet);
+app.post('/login', loginPost);
 
-app.get('/logout', logoutGet);
-app.delete('/logout', logoutDelete)
+app.get('/logout', authenticate ,logoutGet);
+app.delete('/logout', authenticate ,logoutDelete)
 
-app.get('/settings', settingsGet);
-app.patch('/settings', settingsPatch)
+app.get('/settings', authenticate ,settingsGet);
+app.patch('/settings', authenticate ,settingsPatch, emailVerGet)
 
-app.use('/store', storeRouter)
-app.use('/cart', cartRouter)
-app.use('/admin', adminRouter);
+app.use('/store', authenticate ,storeRouter)
+app.use('/cart', authenticate ,cartRouter)
+app.use('/admin', adminAuthenticate,adminRouter);
+
 db.sync()
 .then(result => {
     app.listen(details.port, details.host, ()=> {

@@ -8,7 +8,7 @@ import sessionTable from './../Models/session.js'
 
 
 
-const loginGet = (req,res) => {
+export const loginGet = (req,res) => {
     //Check if the session is valid
     return res.status(200).json({
         Message: "Login"
@@ -17,7 +17,7 @@ const loginGet = (req,res) => {
 
 }
 
-const loginPost = async (req,res) => {
+export const loginPost = async (req,res) => {
    
     
     const loginee = req.body
@@ -65,7 +65,3 @@ const loginPost = async (req,res) => {
      })
 }
 
-export default {
-    loginGet: loginGet,
-    loginPost: loginPost
-}

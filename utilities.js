@@ -2,6 +2,8 @@ import accounts from './Models/accounts.js';
 import dotenv from 'dotenv';
 import emailer from 'nodemailer'
 import moment from 'moment'
+import orders from './Models/order.js'
+import products from './Models/products.js';
 dotenv.config();
 
 export const removeUnverifiedAccounts = async ()=> {
@@ -96,5 +98,83 @@ export const adjustChecksum = async (account, isRegisteree)=> {
     
     
     return updatedRows;
+    
+}
+
+export const authenticate = (req,res, next) => {
+    req.sessionStore.get(req.session.id, (err, session) => {
+        if(session && session.userid.verified){
+            next();
+        }
+        else{
+            res.status(401).json({
+                fault: "un-authenticated."
+            })
+        }
+    })
+}
+
+export const adminAuthenticate = (req,res, next) => {
+    req.sessionStore.get(req.session.id, async (err, session) => {
+        if(session){
+            const isAdmin = await accounts.findAll({where: {id: session.userid.id}});
+            if(isAdmin[0].get('isPrivilieged')){
+                next();
+            }
+            else{
+                res.status(403).json({
+                    fault: "un-privilieged"
+                })
+            }
+        }
+        else{
+            res.status(401).json({
+                fault: "un-authenticated"
+            })
+        }
+    })
+}
+
+export const adminIdentityVerification = (req,res, next) => {
+    if(!req.query){
+        return res.status(403).json({
+            fault: "access denied."
+        })
+    }
+    const {admpass} = req.query;
+
+    if(admpass == process.env.ADMIN_PASSWORD){
+        next();
+    }
+
+    res.status(403).json({
+        fault: "access denied"
+    })
+
+}
+
+//2. add functionality in the main route to check if any products by their id are in stock ->
+//   if they are not in stock, alert user
+export const retrieveOutOfStock = async (userId) =>{
+
+    const ordersById = await orders.findAll({where : {account_id: userId}});
+
+    
+    const OutOfStock = ordersById.filter( async order => {
+         (await products.findByPk(order.get('product_id'))).get('stock') == 0;
+    })
+
+    return OutOfStock;
+
+}
+export const retrieveTotalPrice = async (productList) => {
+
+    var total = 0;
+    productList.forEach(async product => {
+        total += ((await products.findByPk(product.id)).get('price') * product.amount);
+    })
+
+    return total;
+
     
 }
