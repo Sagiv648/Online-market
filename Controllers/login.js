@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import acc from './../Models/accounts.js'
 import sessionTable from './../Models/session.js'
 
-//TODO: Integrate json-web-token
+
 
 
 
@@ -35,7 +35,7 @@ export const loginPost = async (req,res) => {
                               verified: !(accounts[0].get('isLocked'))}
                              
                         
-            //console.log(`from the loginPost: ${req.session.userid}`);
+            
             req.session.save(()=> {
 
                 

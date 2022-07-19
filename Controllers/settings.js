@@ -9,7 +9,7 @@ import { checkPassword } from './register.js';
 
 
 
-const settingsGetMethod = (req, res) => {
+export const settingsGet = (req, res) => {
     
     req.sessionStore.get(req.session.id, async (err, session) => {
         
@@ -64,7 +64,7 @@ const checkEmail = (email_addr) => {
     return 1
 }
 
-const settingsPatchMethod = (req, res, next) => {
+export const settingsPatch = (req, res, next) => {
 
 
     req.sessionStore.get(req.session.id, async (err, session) => {
@@ -157,5 +157,3 @@ const settingsPatchMethod = (req, res, next) => {
 }
 
 
-export const settingsGet = settingsGetMethod;
-export const settingsPatch = settingsPatchMethod

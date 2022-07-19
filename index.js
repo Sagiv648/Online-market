@@ -62,10 +62,11 @@ app.use(session({
 }))
 
 app.use(cookieParser())
-app.set('views', 'ejs');
-app.set('views', 'views');
 
-app.use(express.static('views'))
+// app.set('views', 'ejs');
+// app.set('views', 'views');
+
+// app.use(express.static('views'))
 
 
 app.get('/' ,async (req,res) => {

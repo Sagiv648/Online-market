@@ -9,6 +9,10 @@ env.config();
 /*
 3. add a delete request to delete categories from the store (category table)
 4. add a delete request to delete products from the store (products table)
+5. handle the adminaddprod to check whether it exists or not, exists? don't create and throw error, doesn't exist? create and proceed
+6. add a route to edit products
+7. in the adminprods display the out of stock and soon to be out of stock products(stock < 10)
+
 */
 
 

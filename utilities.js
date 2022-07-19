@@ -159,22 +159,44 @@ export const retrieveOutOfStock = async (userId) =>{
 
     const ordersById = await orders.findAll({where : {account_id: userId}});
 
+    const outOfStock = [];
+    for(let i = 0; i < ordersById.length; i++){
+        var tmp = await products.findAll({where: {id: ordersById[i].get('product_id'), stock: 0}})
+        if(tmp.length != 0){
+            outOfStock.push(tmp[0]);
+        }
+    }
     
-    const OutOfStock = ordersById.filter( async order => {
-         (await products.findByPk(order.get('product_id'))).get('stock') == 0;
-    })
-
-    return OutOfStock;
+    return outOfStock;
 
 }
 export const retrieveTotalPrice = async (productList) => {
 
-    var total = 0;
-    productList.forEach(async product => {
-        total += ((await products.findByPk(product.id)).get('price') * product.amount);
-    })
+    var total = 0.0;
+    if(productList.length == 0){
+        return 0;
+    }
+    for(let i = 0; i < productList.length; i++){
+        var tmp = await products.findByPk(productList[i].product_id);
+        total += (tmp.get('price') * parseInt(productList[i].amount));
+    }
+
+    
 
     return total;
 
     
+}
+export const isNumeric = (numberString) =>{
+    for(let i = 0; i < numberString.length; i++){
+        if(numberString[i] < '0' || numberString[i] > '9'){
+            return 0;
+        }
+    }
+    return 1;
+}
+export const isAmountExceeds = async (amount, pid) =>{
+
+    const productInQuestion = await products.findByPk(pid);
+    return productInQuestion.get('stock') < amount
 }

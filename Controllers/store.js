@@ -1,4 +1,4 @@
-import express, { query } from 'express'
+import express from 'express'
 import dotenv from 'dotenv'
 import products from './../Models/products.js'
 import category from './../Models/category.js'
@@ -8,10 +8,16 @@ const storeRouter = express.Router();
 
 dotenv.config();
 
-//TODO: nothing atm
+
+//TODO:
+//1. Refactor the code, remove unneccsary authentication since the route already has a middleware to handle that.
+//2. Have the store main route to display ONLY items which are in stock. (stock >= 1)
+//3. Handle the category route to display items based on a category name
+//4. Handle the product route to display item/items based on the name ->
+//  parse the product's name to remove the '_'(underscores)
 
 
-storeRouter.get('/', (req, res) => {
+storeRouter.get('/', async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, session) => {
         if(session){
             if(!session.userid.verified){
