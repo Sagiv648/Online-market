@@ -1,8 +1,11 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import products from './../Models/products.js'
-import category from './../Models/category.js'
+import productsModel from './../Models/products.js'
+import categoryModel from './../Models/category.js'
 import order from './../Models/order.js'
+
+import sequelize from 'sequelize'
+
 
 const storeRouter = express.Router();
 
@@ -10,65 +13,103 @@ dotenv.config();
 
 
 //TODO:
-//1. Refactor the code, remove unneccsary authentication since the route already has a middleware to handle that.
-//2. Have the store main route to display ONLY items which are in stock. (stock >= 1)
-//3. Handle the category route to display items based on a category name
-//4. Handle the product route to display item/items based on the name ->
-//  parse the product's name to remove the '_'(underscores)
+//1. Refactor the code, remove unneccsary authentication since the route already has a middleware to handle that. ^
+//2. Have the store main route to display ONLY items which are in stock. (stock >= 5) ^
+//3. Handle the category route to display items based on a category name ^
+//4. Handle the product route to display item/items based on the name ^
+
 
 
 storeRouter.get('/', async (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, session) => {
-        if(session){
-            if(!session.userid.verified){
-                return res.status(400).json({
-                    fault: "Access denied until your verify your email"
-                })
-            }
 
-            const allStoreProducts = await products.findAll();
-            
-            return res.status(200).json({
-                username: session.userid.username,
-                products: allStoreProducts
-                
-            })
-        }
-        else{
-            return res.status(400).json({
-                fault: "only logged in allowed"
-            })
-        }
+    const {gte} = sequelize.Op
+    const allProducts = await productsModel.findAll({where: { stock: {[gte]: 5}}})
+    if(allProducts.length == 0){
+        return res.status(500).json({
+            fault: "server fault"
+        })
+    }
+
+    return res.status(200).json({
+        products: allProducts
     })
+
 })
 
 
 storeRouter.get('/category', async (req,res) => {
 
-    const cid = req.query.cid;
-    const allCategories = await category.findAll({where: {id: cid}});
+    const {gte} = sequelize.Op;
+    const {cname} = req.query;
 
-    if(allCategories.length == 0) {
-        return res.status(200).json({
-            category: allCategories,
-            products: "no products"
+    if(!cname){
+        return res.status(400).json({
+            fault: "no param"
         })
     }
-    const productsPerCategories = await products.findAll({where: {category_id : allCategories[0].get('id')}});
-
+    const category = await categoryModel.findAll({where: {category_name: cname}});
+    if(category.length == 0){
+        return res.status(400).json({
+            fault: "no category with such name"
+        })
+    }
+    const products = await productsModel.findAll({where:{category_id: category[0].get('id'), stock: {[gte]: 5}}});
+    
+    if(products.length == 0){
+        return res.status(500).json({
+            fault: "server fault"
+        })
+    }
     return res.status(200).json({
-        category: allCategories[0],
-        products: productsPerCategories
+        category: cname,
+        products: products
     })
+
 })
 
-storeRouter.get('/product', async (req,res) => {
 
-    const {id, name,stock} = req.query;
-    const allProducts = await products.findAll({where: {id: id, product_name: name, stock: stock}});
+
+
+storeRouter.get('/findproduct', async (req,res) => {
+
+    const {name} = req.query;
+    const {gte} = sequelize.Op;
+    if(!name){
+        return res.status(400).json({
+            fault: "no param"
+        })
+    }
+
+    const productsByName = await productsModel.findAll({where: {product_name: name, stock: {[gte]: 5}}});
+    if(productsByName.length == 0){
+        return res.status(400).json({
+            fault: "no products with such name"
+        })
+    }
+    const checkArr = [];
+    const productsByCategory = [];
+    let j = 0;
+    for(let i = 0; i < productsByName.length; i++)
+    {
+        for( j = 0; j < checkArr.length; j++){
+            if(checkArr[j] == productsByName[i].get('category_id')){
+                break;
+            }
+        }
+        if(j == checkArr.length){
+            checkArr.push(productsByName[i].get('category_id'));
+            var categoryName = await categoryModel.findByPk(productsByName[i].get('category_id'));
+            var allFoundProdsByCategory = await productsModel.findAll({where: {product_name: name,
+                                                                        stock: {[gte]: 5}, category_id: categoryName.get('id')}});
+            if(allFoundProdsByCategory.length != 0){
+                productsByCategory.push({category: categoryName.get('category_name'), products: allFoundProdsByCategory});
+            }
+        }
+    }
     return res.status(200).json({
-        products: allProducts
+        products_found: productsByCategory
     })
+    
     
 })
 

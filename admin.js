@@ -1,24 +1,13 @@
 import env from 'dotenv'
 import express from 'express'
-import products from './Models/products.js';
-import categories from './Models/category.js';
+import productsModel from './Models/products.js';
+import categoriesModel from './Models/category.js';
+import sequelize from 'sequelize';
 
 env.config();
 
-//TODO:
-/*
-3. add a delete request to delete categories from the store (category table)
-4. add a delete request to delete products from the store (products table)
-5. handle the adminaddprod to check whether it exists or not, exists? don't create and throw error, doesn't exist? create and proceed
-6. add a route to edit products
-7. in the adminprods display the out of stock and soon to be out of stock products(stock < 10)
-
-*/
-
-
 
 const adminRouter = express.Router();
-
 
 adminRouter.get('/', (req,res) => {
     return res.status(200).json({
@@ -29,16 +18,33 @@ adminRouter.get('/', (req,res) => {
 })
 
 adminRouter.get('/adminprods', async (req,res) => {
-    const {catid} = req.query;
-    if(catid){
-        const prodsByCategory = await products.findAll({where: {category_id: catid}});
+
+    const {lte} = sequelize.Op;
+    const {cname} = req.query;
+    if(cname){
+        const categories= await categoriesModel.findAll({where: {category_name: cname}});
+        if(categories.length == 0){
+            return res.status(400).json({
+                fault: "no category with such name"
+            })
+        }
+        const prodsByCategoryName = await productsModel.findAll({where:{category_id: categories[0].get('id')}});
+        const noStock = await productsModel.findAll({where:{category_id: categories[0].get('id'), stock: {[lte]:5}}});
+
         return res.status(200).json({
-            prodsByCategory
+            category: cname,
+            out_of_stock: noStock,
+            products: prodsByCategoryName
         })
+        
     }
-    const allProds = await products.findAll();
+    const allProds = await productsModel.findAll();
+    const outOfStock = await productsModel.findAll({where:{stock: {[lte]: 5}}});
         return res.status(200).json({
-            allProds
+            out_of_stock: outOfStock,
+            products: allProds
+            
+            
         })
 
 
@@ -46,13 +52,14 @@ adminRouter.get('/adminprods', async (req,res) => {
 
 //1. add a post request to add categories to the store (category table)
 adminRouter.post('/adminaddcat', async (req,res) => {
+
     const {name} = req.query;
     if(!name.length){
         return res.status(400).json({
             fault: "query fault"
         })
     }
-    const newCategory = await categories.create({category_name: name})
+    const newCategory = await categoriesModel.create({category_name: name})
     return res.status(200).json({
             added: newCategory
         })
@@ -61,6 +68,7 @@ adminRouter.post('/adminaddcat', async (req,res) => {
 
 //2. add a post request to add products to the store (products table)
 adminRouter.post('/adminaddprod', async (req,res) => {
+
     const {name, catname, stock, price} = req.query;
     const test = name.length * catname.length * stock.length * price.length;
     if(!test){
@@ -69,7 +77,7 @@ adminRouter.post('/adminaddprod', async (req,res) => {
         })
     }
 
-    const category = await categories.findAll({where: {category_name: catname}});
+    const category = await categoriesModel.findAll({where: {category_name: catname}});
     if(category.length == 0){
         return res.status(400).json({
             fault: "query fault"
@@ -77,7 +85,7 @@ adminRouter.post('/adminaddprod', async (req,res) => {
     }
 
     
-    const prod = await products.create({
+    const prod = await productsModel.create({
                                         product_name: name,
                                         category_id: category[0].get('id'),
                                         stock: stock,
@@ -93,7 +101,6 @@ adminRouter.post('/adminaddprod', async (req,res) => {
             added: prod
         })
 })
-
 
 
 

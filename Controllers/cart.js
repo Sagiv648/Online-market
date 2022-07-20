@@ -27,23 +27,9 @@ cartRouter.get('/', async (req,res) => {
 
 
 
-//1. add a post request to add to the cart(orders table)
+
 cartRouter.post('/append', async (req,res) => {
 
-
-//If the account already has in his cart an item with the same id ->
-// add the appended amount with the current row to prevent unnecessary duplicates
-
-//Steps:
-//1. add a validation incase the user doesn't enter an integer value ^
-
-//2. check if an instance with product_id pid exists in the row where account_id is the user's id -> ^
-//  exists? update the instance to be current amount + appended amount ->
-//  doesn't exist? create a new instance with the relevant details.
-
-//3. make sure the amount posted doesn't exceed the amount in stock -> ^
-//  exceeds? throw a bad request ->
-//  doesn't exceed? update where account_id is user's id and product_id is pid
         const {pid, amount} = req.body;
         if(!amount){
             return res.status(400).json({
@@ -150,11 +136,6 @@ cartRouter.delete('/delete', async (req,res) => {
 
 cartRouter.get('/payment', async (req,res) => {
 
-//TODO:
-//Steps:
-//1. As it is a protected route and the userid is contained in the data fields, parameters or query strings doesn't need to be included ->
-// return the total worth of the items in the cart
-
     const cart = await order.findAll({where: {account_id: req.session.userid.id}});
     const total = await retrieveTotalPrice(cart);
     return res.status(200).json({
@@ -168,34 +149,8 @@ cartRouter.get('/payment', async (req,res) => {
 
 
 
-/* Payment
-{
-    "products": [
-        {
-            "product_id": "",
-            "amount" : ""
-        }
-    ],
-    "payment_details" : {
-        "card_number": "",
-        "card_code" : "",
-        "expiration_date" : ""
-    }
-}
-*/
-
-//The client will tick the items in his cart and the amount as a state ->
-//  every item ticked in the cart will be added to the products buffer ->
-//  the client will fill out his details and those details will be sent to the backend along with the products buffer.
-// * Note: The products buffer should be less prone to errors since it is handled by the code and the events ->
-//  in contrast to the payment details filled by the client and therefore can be prone to errors
-
-//Steps:
-//1. Delete the amount bought from the user's order once the payment is complete. ^
-//2. Delete the amount bought from the product's stock once the payment is complete. ^
-// -> if product's stock reaches 0, make sure it doesn't load in the store route
-// -> if order's amount reaches 0, delete the instance
 cartRouter.post('/payment', async (req,res) => {
+    
     const {products, payment_details} = req.body;
     const {card_number, card_code, expiration_date} = payment_details;
     if(card_number.length != 16 || card_code.length != 3){
@@ -226,7 +181,7 @@ cartRouter.post('/payment', async (req,res) => {
         // Payment handled here
         //
 
-        
+        //After payment is handled, correct the database records according the purchase's amount
         for(let i = 0; i < products.length; i++){
 
             var orderTmp = await order.findOne({where: {account_id: req.session.userid.id, product_id: products[i].product_id}})
@@ -249,9 +204,6 @@ cartRouter.post('/payment', async (req,res) => {
             }
         }
         
-
-        //
-
         return res.status(200).json({
             total_price: total,
             items_bought: products
@@ -259,16 +211,12 @@ cartRouter.post('/payment', async (req,res) => {
         })
     }
     else{
-        //throw error because it will contain either in or ago, ago means the card expired
+        
         return res.status(400).json({
             fault: "card expired"
         })
     }
     
-    //4550 4393 2738 9769
-    //4511 7353 2614 6342
-    //4069 7377 4874 6580
-
     
 })
 
