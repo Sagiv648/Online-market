@@ -111,6 +111,11 @@ app.use('/store', authenticate ,storeRouter)
 app.use('/cart', authenticate ,cartRouter)
 app.use('/admin', adminAuthenticate,adminRouter);
 
+app.use((req,res) => {
+    return res.status(404).json({
+        error: "resource not found"
+    })
+})
 db.sync()
 .then(result => {
     app.listen(details.port, details.host, ()=> {
