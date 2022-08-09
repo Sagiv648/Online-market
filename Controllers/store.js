@@ -12,11 +12,12 @@ const storeRouter = express.Router();
 dotenv.config();
 
 
-//TODO:
+//TODO: 
 //1. Refactor the code, remove unneccsary authentication since the route already has a middleware to handle that. ^
 //2. Have the store main route to display ONLY items which are in stock. (stock >= 5) ^
 //3. Handle the category route to display items based on a category name ^
 //4. Handle the product route to display item/items based on the name ^
+// All done
 
 
 

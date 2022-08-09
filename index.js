@@ -14,15 +14,14 @@ import adminRouter from './admin.js'
 import storeRouter from './Controllers/store.js'
 import cartRouter from './Controllers/cart.js'
 import scheduler from 'node-schedule'
-import {removeUnverifiedAccounts, authenticate, adminAuthenticate, adminIdentityVerification} from './utilities.js'
-import moment from 'moment';
+import {removeUnverifiedAccounts, authenticate, adminAuthenticate} from './utilities.js'
+
+
 const seqStore = sequelizeStore(session.Store);
-
-
 
 const job = scheduler.scheduleJob('0 0 0 * * ?', async () => await removeUnverifiedAccounts());
 
-const sessionLength = 86400000
+const sessionLength = 86400000;
 
 const details = {
     port: process.env.PORT,

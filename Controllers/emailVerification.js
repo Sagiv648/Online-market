@@ -1,4 +1,4 @@
-import {emailVerification, adjustChecksum} from './../utilities.js'
+import {adjustChecksum} from './../utilities.js'
 import dotnev from 'dotenv'
 import moment from 'moment';
 import accounts from './../Models/accounts.js'

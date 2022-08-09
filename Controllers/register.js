@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import acc from './../Models/accounts.js'
 
 
-import {emailVerification, adjustChecksum} from './../utilities.js'
+import {adjustChecksum} from './../utilities.js'
 //NOTE: forum account will be locked until verified through email
 // A locked forum account means that the account will NOT have access to the following:
 // 1. Store route
@@ -96,7 +96,7 @@ export const registerPost = async (req,res,next) => {
         lastChecksumStamp: 0
 
     })
-    // const adjustChecksum = async (user, account, isRegisteree)
+    
     const {dataValues} = account;
     const registred = await adjustChecksum(dataValues, 1);
     if(registred > 0){
