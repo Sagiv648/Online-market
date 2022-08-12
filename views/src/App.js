@@ -1,21 +1,24 @@
 import logo from './logo.svg';
 import './App.css';
-//import dotenv from 'dotenv'
+
 import axios from 'axios'
 import {useEffect} from 'react'
 
-//dotenv.config();
+
 
 function App() {
 
-  useEffect(()=> {
-    const fetch = async ()=> {
-      const out = await axios.get(`http://127.0.0.1:2000/`);
-      console.log(out.data);
-    }
-    fetch();
-  })
+  
+  useEffect(() => {
 
+    const fetch = async () => {
+      const d = await axios.get(`http://${process.env.REACT_APP_HOST_URL_ADDR}:${process.env.REACT_APP_HOST_URL_PORT}`)
+      console.log(d.data);
+    }
+
+    fetch();
+    
+  })
 
   return (
     <div className="App">
