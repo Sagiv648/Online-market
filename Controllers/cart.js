@@ -1,4 +1,4 @@
-import express, { query } from 'express'
+import express from 'express'
 import dotenv from 'dotenv'
 import productModel from './../Models/products.js'
 import category from './../Models/category.js'
